@@ -1,0 +1,22 @@
+name: Verify model and public Pages
+on:
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node check.mjs
+      - name: Anonymous public checks outside the local VPN
+        shell: bash
+        run: |
+          for asset in index.html app.js model.js style.css; do
+            curl --fail --silent --show-error --retry 3 --retry-delay 5 "https://panikrin.github.io/apartment-panel-3d/$asset" -o "$RUNNER_TEMP/panel-$asset"
+            cmp "$asset" "$RUNNER_TEMP/panel-$asset"
+            echo "Verified public asset: $asset"
+          done
